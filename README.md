@@ -17,6 +17,8 @@ Application Android (Flutter) pour les boutiques d'alimentation : noter facileme
 - 📞 **Appeler** le client et 🔔 **rappel WhatsApp** pré-rempli avec son solde
 - Thème clair et sombre automatiques, tout en français, montants en **FCFA**
 - Données enregistrées **sur le téléphone** (SQLite) : fonctionne sans internet
+- 🔄 **Mises à jour automatiques** : au démarrage, l'application vérifie s'il existe une nouvelle version sur GitHub et propose de l'installer (menu ⋮ → *Vérifier les mises à jour*)
+- Icône personnalisée (carnet + pièce)
 
 ## 📦 Obtenir l'APK avec GitHub (sans rien installer)
 
@@ -31,12 +33,7 @@ Application Android (Flutter) pour les boutiques d'alimentation : noter facileme
    ```
 2. Va dans l'onglet **Actions** du dépôt : le workflow **Build APK** se lance tout seul (≈ 5 à 8 min).
 3. Ouvre l'exécution terminée → section **Artifacts** → télécharge **carnet-dettes-apk** (un .zip contenant l'APK).
-4. Pour une **Release** téléchargeable directement :
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-   L'APK apparaît alors dans l'onglet **Releases**.
+4. L'APK est aussi publié automatiquement dans l'onglet **Releases** (lien direct : `https://github.com/syllapro888/carnet-dettes/releases/latest/download/carnet-dettes.apk`).
 
 > Sur le téléphone, autorise « Installer des applications inconnues » pour installer l'APK.
 
@@ -73,9 +70,11 @@ Dans `lib/utils/format.dart` :
 - `kCurrency` : la monnaie affichée (`FCFA` par défaut)
 - `kDefaultCountryCode` : indicatif ajouté aux numéros pour WhatsApp (`242` = Congo-Brazzaville ; mets `225` pour la Côte d'Ivoire, `223` pour le Mali, etc.)
 
-## 🔐 Note sur la signature
+## 🔐 Signature et mises à jour
 
-L'APK de release est signé avec la clé de debug générée par Flutter : il s'installe sans problème, mais pour le Play Store il faudra créer ta propre clé ([guide officiel](https://docs.flutter.dev/deployment/android#signing-the-app)).
+Tous les APK sont signés avec la même clé (`signing/release.keystore`), ce qui permet d'installer chaque nouvelle version **par-dessus** l'ancienne sans perdre les données. Ne supprime pas ce fichier. Pour publier sur le Play Store, crée plutôt une clé privée stockée dans les *Secrets* GitHub ([guide officiel](https://docs.flutter.dev/deployment/android#signing-the-app)).
+
+Chaque `git push` sur `main` crée une Release `v1.0.N` ; l'application installée la détecte toute seule.
 
 ## 🚀 Idées pour la suite
 

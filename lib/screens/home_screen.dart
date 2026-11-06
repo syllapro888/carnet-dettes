@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/db.dart';
 import '../theme.dart';
 import '../utils/format.dart';
+import '../utils/updater.dart';
 import '../widgets/common.dart';
 import 'client_chat_screen.dart';
 import 'client_form_screen.dart';
@@ -30,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _load();
+    // Vérifie les mises à jour au démarrage (silencieux si déjà à jour)
+    WidgetsBinding.instance.addPostFrameCallback((_) => checkForUpdate(context));
   }
 
   @override
@@ -146,6 +149,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _about() {
+    showAboutDialog(
+      context: context,
+      applicationName: 'Carnet de Dettes',
+      applicationVersion: 'Version $appVersion',
+      applicationIcon: const Icon(Icons.menu_book_rounded,
+          size: 40, color: AppColors.primary),
+      children: const [
+        Text('Notez facilement les achats à crédit et les paiements de vos clients.'),
+      ],
+    );
+  }
+
   PreferredSizeWidget _appBar() {
     if (!_searching) {
       return AppBar(
@@ -155,6 +171,30 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Rechercher',
             icon: const Icon(Icons.search),
             onPressed: () => setState(() => _searching = true),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (v) {
+              if (v == 'update') checkForUpdate(context, silent: false);
+              if (v == 'about') _about();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'update',
+                child: ListTile(
+                  leading: Icon(Icons.system_update),
+                  title: Text('Vérifier les mises à jour'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'about',
+                child: ListTile(
+                  leading: Icon(Icons.info_outline),
+                  title: Text('À propos'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       );

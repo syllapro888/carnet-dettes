@@ -3,7 +3,6 @@ name: Build APK
 on:
   push:
     branches: [main, master]
-    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -26,23 +25,41 @@ jobs:
           channel: stable
           cache: true
 
-      # Génère le dossier android/ s'il n'a pas encore été ajouté au dépôt
+      # Génère le dossier android/ s'il n'est pas dans le dépôt
       - name: Préparer le projet Android
         run: |
           if [ ! -d android ]; then
             flutter create . --project-name carnet_dettes --org com.carnetdettes --platforms android
-            MANIFEST=android/app/src/main/AndroidManifest.xml
-            sed -i 's/android:label="carnet_dettes"/android:label="Carnet de Dettes"/' "$MANIFEST"
-            # Autorise l'ouverture du téléphone et de WhatsApp (Android 11+)
-            sed -i 's|<queries>|<queries>\n        <intent><action android:name="android.intent.action.DIAL" /><data android:scheme="tel" /></intent>\n        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>|' "$MANIFEST"
           fi
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:label="carnet_dettes"/android:label="Carnet de Dettes"/' "$MANIFEST"
+          # Internet (vérification des mises à jour)
+          grep -q 'android.permission.INTERNET' "$MANIFEST" || \
+            sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET" />\n    <application|' "$MANIFEST"
+          # Ouverture du téléphone et de WhatsApp (Android 11+)
+          grep -q 'android.intent.action.DIAL' "$MANIFEST" || \
+            sed -i 's|<queries>|<queries>\n        <intent><action android:name="android.intent.action.DIAL" /><data android:scheme="tel" /></intent>\n        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>|' "$MANIFEST"
+
+      # Toujours la même clé de signature : les mises à jour s'installent
+      # par-dessus l'ancienne version sans perdre les données.
+      - name: Installer la clé de signature
+        run: |
+          mkdir -p ~/.android
+          cp signing/release.keystore ~/.android/debug.keystore
 
       - run: flutter pub get
+
+      - name: Générer l'icône de l'application
+        run: dart run flutter_launcher_icons
 
       - run: flutter test
 
       - name: Construire l'APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=APP_BUILD=${{ github.run_number }}
 
       - name: Renommer l'APK
         run: cp build/app/outputs/flutter-apk/app-release.apk carnet-dettes.apk
@@ -52,15 +69,10 @@ jobs:
           name: carnet-dettes-apk
           path: carnet-dettes.apk
 
-      - name: Publier une Release (sur un tag v*)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: carnet-dettes.apk
-
-      # À chaque mise à jour de main : nouvelle Release avec l'APK
-      - name: Publier une Release automatique
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      # À chaque mise à jour de main : nouvelle Release avec l'APK.
+      # L'application installée la détecte et propose la mise à jour.
+      - name: Publier la Release
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
