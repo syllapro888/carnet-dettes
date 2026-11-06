@@ -57,3 +57,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: carnet-dettes.apk
+
+      # À chaque mise à jour de main : nouvelle Release avec l'APK
+      - name: Publier une Release automatique
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Carnet de Dettes v1.0.${{ github.run_number }}
+          body: "📱 Téléchargez **carnet-dettes.apk** ci-dessous et installez-le sur votre téléphone Android."
+          make_latest: true
+          files: carnet-dettes.apk
