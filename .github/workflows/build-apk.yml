@@ -23,6 +23,9 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Version figée : celle de la dernière construction réussie (v1.0.5).
+          # La 3.50.0 fait planter la construction Android (image_picker).
+          flutter-version: 3.47.9
           cache: true
 
       # Génère le dossier android/ s'il n'est pas dans le dépôt
