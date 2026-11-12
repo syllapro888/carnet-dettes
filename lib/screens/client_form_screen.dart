@@ -137,6 +137,13 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEdit ? 'Modifier le client' : 'Nouveau client'),
+        actions: [
+          IconButton(
+            tooltip: _isEdit ? 'Enregistrer' : 'Créer le client',
+            icon: const Icon(Icons.check),
+            onPressed: _saving ? null : _save,
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -216,9 +223,11 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
           ],
         ),
       ),
+      // Le bouton remonte au-dessus du clavier quand il est ouvert.
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          padding: EdgeInsets.fromLTRB(
+              20, 8, 20, 16 + MediaQuery.viewInsetsOf(context).bottom),
           child: SizedBox(
             height: 54,
             child: FilledButton.icon(
